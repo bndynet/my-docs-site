@@ -32,6 +32,10 @@ const config = {
     locales: ['en'],
   },
 
+  markdown: {
+    mermaid: true,
+  },
+
   presets: [
     [
       'classic',
@@ -52,7 +56,7 @@ const config = {
             'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
         },
         theme: {
-          customCss: require.resolve('./src/css/custom.css'),
+          customCss: require.resolve('./src/css/custom.scss'),
         },
       }),
     ],
@@ -63,6 +67,10 @@ const config = {
     ({
       // Replace with your project's social card
       image: 'img/docusaurus-social-card.jpg',
+
+      // This would become <meta name="keywords" content="cooking, blog"/> in the generated HTML
+      metadata: [{name: 'keywords', content: 'bendy, bing, blog'}],
+
       navbar: {
         title: app.name,
         logo: {
@@ -79,11 +87,31 @@ const config = {
       prism: {
         theme: lightCodeTheme,
         darkTheme: darkCodeTheme,
+        magicComments: [
+          // Remember to extend the default highlight class name as well!
+          {
+            className: 'theme-code-block-highlighted-line',
+            line: 'highlight-next-line',
+            block: { start: 'highlight-start', end: 'highlight-end' },
+          },
+          {
+            className: 'code-block-error-line',
+            line: 'This will error',
+          },
+        ],
+      },
+      imageZoom: {
+        // CSS selector to apply the plugin to, defaults to '.markdown img'
+        selector: '.markdown img',
       },
     }),
 
+  themes: ['@docusaurus/theme-live-codeblock', '@docusaurus/theme-mermaid'],
+
   plugins: [
-    require.resolve("@cmfcmf/docusaurus-search-local"),
+    'plugin-image-zoom',
+    'docusaurus-plugin-sass',
+    '@cmfcmf/docusaurus-search-local',
   ],
 };
 

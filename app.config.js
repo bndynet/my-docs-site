@@ -20,8 +20,9 @@ module.exports = {
       { to: '/blog', label: 'Blog', position: 'left' },
       {
         href: `https://github.com/${this.githubUser}/${this.githubRepo}`,
-        label: 'GitHub',
         position: 'right',
+        className: 'header-github-link',
+        'aria-label': 'GitHub repository',
       },
     ];
   },
