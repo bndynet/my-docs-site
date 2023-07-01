@@ -2,6 +2,7 @@ module.exports = {
   url: 'https://bndy.net',
   baseUrl: '/',
   logoUrl: 'https://static.bndy.net/images/logo_fill.svg',
+  footerLogoUrl: 'img/docusaurus-social-card.jpg',
   name: 'BNDY-NET',
   title: 'My Documentation Site',
   tagline: 'Write the documentation with Markdown and React Components.',
@@ -28,6 +29,11 @@ module.exports = {
   },
   get footerLinks() {
     return [
+      {
+        items: [{
+          html: `<img src="${this.baseUrl}${this.footerLogoUrl}" style="height: 150px; position: relative;" />`,
+        }],
+      },
       {
         title: 'Docs',
         items: [
