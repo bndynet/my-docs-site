@@ -46,14 +46,14 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            `https://github.com/${app.githubUser}/${app.githubRepo}/tree/main/website/`,
         },
         blog: {
           showReadingTime: true,
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/',
+            `https://github.com/${app.githubUser}/${app.githubRepo}/tree/main/website/`,
         },
         theme: {
           customCss: require.resolve('./src/css/custom.scss'),
@@ -69,7 +69,7 @@ const config = {
       image: 'img/docusaurus-social-card.jpg',
 
       // This would become <meta name="keywords" content="cooking, blog"/> in the generated HTML
-      metadata: [{name: 'keywords', content: 'bendy, bing, blog'}],
+      metadata: [{ name: 'keywords', content: 'bendy, bing, blog' }],
 
       navbar: {
         title: app.name,
@@ -113,6 +113,10 @@ const config = {
     'docusaurus-plugin-sass',
     '@cmfcmf/docusaurus-search-local',
   ],
+
+  stylesheets: [],
+
+  scripts: [],
 };
 
 module.exports = config;

@@ -1,0 +1,20 @@
+# Components
+
+```jsx live
+function showComponent(props) {
+  class HelloWorld extends HTMLElement {
+    connectedCallback() {
+      this.textContent = `Hello ${this.getAttribute('name') || 'World'}!`;
+    }
+  }
+  if (!customElements.get('hello-world')) {
+    customElements.define('hello-world', HelloWorld);
+  }
+  const name = 'Bing';
+  return (
+    <div>
+      <hello-world name={name} onClick={() => alert(`Hi ${name}, it is me.`)}></hello-world>
+    </div>
+  );
+}
+```
