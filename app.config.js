@@ -1,8 +1,9 @@
 module.exports = {
+  staticDirectories: ['static'],
   url: 'https://bndy.net',
   baseUrl: '/',
   logoUrl: 'https://static.bndy.net/images/logo_fill.svg',
-  footerLogoUrl: 'img/docusaurus-social-card.jpg',
+  footerLogoUrl: 'https://static.bndy.net/images/logo_white.png',
   name: 'BNDY-NET',
   title: 'My Documentation Site',
   tagline: 'Write the documentation with Markdown and React Components.',
@@ -19,6 +20,7 @@ module.exports = {
         label: this.docMenuLabel,
       },
       { to: '/blog', label: 'Blog', position: 'left' },
+      { to: '/showcase', label: 'Showcase', position: 'left' },
       {
         href: `https://github.com/${this.githubUser}/${this.githubRepo}`,
         position: 'right',
@@ -31,7 +33,7 @@ module.exports = {
     return [
       {
         items: [{
-          html: `<img src="${this.baseUrl}${this.footerLogoUrl}" style="height: 150px; position: relative;" />`,
+          html: `<img src="${this.footerLogoUrl.startsWith('http') ? this.footerLogoUrl : this.baseUrl + this.footerLogoUrl}" style="height: 150px; position: relative;" />`,
         }],
       },
       {
@@ -56,7 +58,7 @@ module.exports = {
           },
           {
             label: 'Twitter',
-            href: 'https://twitter.com/docusaurus',
+            href: 'https://twitter.com/docusauru',
           },
         ],
       },
@@ -75,4 +77,15 @@ module.exports = {
       },
     ];
   },
+  get externalStylesheets() {
+    return [];
+  },
+  get externalScripts() {
+    return [
+      `https://cdn.tailwindcss.com`,
+      `https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.min.js`,
+      `${this.baseUrl}tw.config.js`,
+      `${this.baseUrl}script.js`,
+    ];
+  }
 };

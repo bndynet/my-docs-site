@@ -74,3 +74,12 @@ button.aa-DetachedSearchButton {
 .medium-zoom--opened .medium-zoom-overlay {
   background: var(--ifm-background-surface-color) !important;
 }
+
+// showcase page
+.tabs-container {
+  margin-bottom: 0 !important;
+}
+
+.showcase + .margin-top--md {
+  margin-top: 0 !important;
+}
