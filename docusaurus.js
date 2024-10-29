@@ -1,8 +1,8 @@
 const path = require('path');
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
-const lightCodeTheme = require('prism-react-renderer/themes/github');
-const darkCodeTheme = require('prism-react-renderer/themes/dracula');
+const lightCodeTheme = require('prism-react-renderer').themes.github;
+const darkCodeTheme = require('prism-react-renderer').themes.dracula;
 
 const getConfig = (app) => (
   {
@@ -117,9 +117,12 @@ const getConfig = (app) => (
     themes: ['@docusaurus/theme-live-codeblock', '@docusaurus/theme-mermaid'],
 
     plugins: [
-      'plugin-image-zoom',
+      'docusaurus-plugin-zooming',
       'docusaurus-plugin-sass',
-      '@cmfcmf/docusaurus-search-local',
+      ['@easyops-cn/docusaurus-search-local', {
+        hashed: true,
+        indexPages: true,
+      }],
       //   (context, options) => {
       //     return {
       //       name: 'my-dev-server',
