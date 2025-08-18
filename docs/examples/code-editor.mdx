@@ -1,0 +1,70 @@
+# Code Editor
+
+## Properties
+
+| Name | Type |
+|----|----|
+| files | `Record<string, { code: string; hidden?: boolean; active?: boolean, codeFile?: string }>` | 
+| theme |  `'auto' \| 'dark' \| 'light' \| 'amethyst' \| 'aquaBlue' \| 'atomDark' \| 'cobalt2' \| 'cyberpunk' \| 'dracula' \| 'ecoLight' \| 'freeCodeCampDark' \| 'githubLight' \| 'gruvboxDark' \| 'gruvboxLight' \| 'levelUp' \| 'monokaiPro' \| 'neoCyan' \| 'nightOwl' \| 'sandpackDark'` |
+| template | `'static' \| 'angular' \| 'react' \| 'solid' \| 'svelte' \| 'vanilla' \| 'vue'` |
+| showFileExplorer | `boolean` |
+
+
+## Example Usage
+
+Below is an example of how to use the `CodeEditor` component with MDX:
+
+```ts
+import CodeEditor from '@site/src/components/CodeEditor';
+
+<CodeEditor template="angular" showFileExplorer={true} files={{ 
+  '/src/app/app.component.html': { 
+    code: `<div class="text-center pt-4">
+  <h1>{{ title }}</h1>
+  <p>Angular App Example</p></div>`},
+  '/src/app/app.component.ts': { 
+    code: `import { Component } from "@angular/core"; 
+import { appTitle } from './data';
+
+@Component({ 
+    selector: "app-root",
+    templateUrl: "./app.component.html",
+    styleUrls: ["./app.component.css"]
+})
+export class AppComponent {
+    title = appTitle;
+}`},
+  '/src/app/data.ts': {
+    codeFile: '/code-editor-files/data.ts',
+  }
+}} />
+```
+
+## Example Preview
+
+Above code in MDX will render a live code editor with the Angular template. Below is a preview of the rendered component:
+
+
+import CodeEditor from '@site/src/components/CodeEditor';
+
+<CodeEditor template="angular" showFileExplorer={true} files={{ 
+  '/src/app/app.component.html': { 
+    code: `<div class="text-center pt-4">
+  <h1>{{ title }}</h1>
+  <p>Angular App Example</p></div>`},
+  '/src/app/app.component.ts': { 
+    code: `import { Component } from "@angular/core"; 
+import { appTitle } from './data';
+
+@Component({ 
+    selector: "app-root",
+    templateUrl: "./app.component.html",
+    styleUrls: ["./app.component.css"]
+})
+export class AppComponent {
+    title = appTitle;
+}`},
+  '/src/app/data.ts': {
+    codeFile: '/code-editor-files/data.ts',
+  }
+}} />

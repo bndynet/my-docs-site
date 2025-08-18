@@ -1,0 +1,19 @@
+{
+  "name": "angular-18",
+  "version": "1.0.0",
+  "main": "src/main.ts",
+  "scripts": {
+  },
+  "dependencies": {
+    "@angular/core": "^14.0.0",
+    "@angular/common": "^14.0.0",
+    "@angular/platform-browser": "^14.0.0",
+    "@angular/platform-browser-dynamic": "^14.0.0",
+    "rxjs": "^7.8.0",
+    "zone.js": "^0.11.4"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0",
+    "parcel": "^2.9.3"
+  }
+}

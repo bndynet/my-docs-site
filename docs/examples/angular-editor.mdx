@@ -1,0 +1,69 @@
+# Angular Editor
+
+This is an enhancement based on Code Editor for angular project. You can use following code to render/edit angular component.
+
+```jsx
+import AngularEditor from '@site/src/components/AngularEditor';
+
+<AngularEditor
+  template="angular"
+  showFileExplorer={false}
+  files={{
+    '/src/app/data.ts': {
+      code: `export const appTitle = 'Angular';`
+    }
+  }}
+  component={{
+    html: `<div class="text-center pt-4">
+<h1>{{ title }} <small>v{{ version }}</small></h1>
+<p>This is an angular component example.</p></div>`,
+    css: `h1 { font-weight: bold;}`,
+    ts: `import { VERSION } from '@angular/core';
+import { Component } from "@angular/core";
+import { appTitle } from '/src/app/data';
+
+@Component({
+    selector: "app-root",
+    templateUrl: "./app.component.html",
+    styleUrls: ["./app.component.css"]
+})
+export class AppComponent {
+    title = appTitle;
+    version = VERSION.full;
+}`,
+   }}
+   />
+```
+
+## Preview
+
+import AngularEditor from '@site/src/components/AngularEditor';
+
+<AngularEditor
+  template="angular"
+  showFileExplorer={false}
+  files={{
+    '/src/app/data.ts': {
+      code: `export const appTitle = 'Angular';`
+    }
+  }}
+  component={{
+    html: `<div class="text-center pt-4">
+<h1>{{ title }} <small>v{{ version }}</small></h1>
+<p>This is an angular component example.</p></div>`,
+    css: `h1 { font-weight: bold;}`,
+    ts: `import { VERSION } from '@angular/core';
+import { Component } from "@angular/core";
+import { appTitle } from '/src/app/data';
+
+@Component({
+    selector: "app-root",
+    templateUrl: "./app.component.html",
+    styleUrls: ["./app.component.css"]
+})
+export class AppComponent {
+    title = appTitle;
+    version = VERSION.full;
+}`,
+   }}
+   />
