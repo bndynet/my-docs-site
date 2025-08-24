@@ -1,70 +1,168 @@
 # Code Editor
 
-## Properties
+## Angular
 
-| Name | Type |
-|----|----|
-| files | `Record<string, { code: string; hidden?: boolean; active?: boolean, codeFile?: string }>` | 
-| theme |  `'auto' \| 'dark' \| 'light' \| 'amethyst' \| 'aquaBlue' \| 'atomDark' \| 'cobalt2' \| 'cyberpunk' \| 'dracula' \| 'ecoLight' \| 'freeCodeCampDark' \| 'githubLight' \| 'gruvboxDark' \| 'gruvboxLight' \| 'levelUp' \| 'monokaiPro' \| 'neoCyan' \| 'nightOwl' \| 'sandpackDark'` |
-| template | `'static' \| 'angular' \| 'react' \| 'solid' \| 'svelte' \| 'vanilla' \| 'vue'` |
-| showFileExplorer | `boolean` |
+:::tip
+The following code block will render an editor for Angular project
+:::
 
+````
+```editor angular showFileExplorer
+///file /src/app/data.ts
+export const appTitle = "Angular";
 
-## Example Usage
+///file /src/app/remote-data.ts  https://localhost/remote-data.ts
 
-Below is an example of how to use the `CodeEditor` component with MDX:
+///file /src/app/app.component.html
+<h1 class="p-4 text-center"> {{ appTitle }}</h1>
 
-```ts
-import CodeEditor from '@site/src/components/CodeEditor';
+///file /src/app/app.component.ts
+import { Component } from "@angular/core";
+import { appTitle } from '/src/app/data.ts';
 
-<CodeEditor template="angular" showFileExplorer={true} files={{ 
-  '/src/app/app.component.html': { 
-    code: `<div class="text-center pt-4">
-  <h1>{{ title }}</h1>
-  <p>Angular App Example</p></div>`},
-  '/src/app/app.component.ts': { 
-    code: `import { Component } from "@angular/core"; 
-import { appTitle } from './data';
-
-@Component({ 
-    selector: "app-root",
-    templateUrl: "./app.component.html",
-    styleUrls: ["./app.component.css"]
+@Component({
+  selector: "app-root",
+  templateUrl: "./app.component.html",
+  styleUrls: ["./app.component.css"]
 })
 export class AppComponent {
-    title = appTitle;
-}`},
-  '/src/app/data.ts': {
-    codeFile: 'https://bndynet.github.io/my-docs-site/code-editor-files/data.ts',
-  }
-}} />
+  appTitle = appTitle;
+}           
+```
+````
+
+```editor angular showFileExplorer
+///file /src/app/data.ts
+export const appTitle = "Angular";
+
+///file /src/app/remote-data.ts  https://localhost/remote-data.ts
+
+///file /src/app/app.component.html
+<h1 class="p-4 text-center"> {{ appTitle }}</h1>
+
+///file /src/app/app.component.ts
+import { Component } from "@angular/core";
+import { appTitle } from '/src/app/data.ts';
+
+@Component({
+  selector: "app-root",
+  templateUrl: "./app.component.html",
+  styleUrls: ["./app.component.css"]
+})
+export class AppComponent {
+  appTitle = appTitle;
+}           
 ```
 
-## Example Preview
-
-Above code in MDX will render a live code editor with the Angular template. Below is a preview of the rendered component:
+### NG Component
 
 
-import CodeEditor from '@site/src/components/CodeEditor';
+````
+```editor ng-component showFileExplorer showLineNumbers
+///file /src/app/data.ts
+export const appTitle = "Angular";
 
-<CodeEditor template="angular" showFileExplorer={true} files={{ 
-  '/src/app/app.component.html': { 
-    code: `<div class="text-center pt-4">
-  <h1>{{ title }}</h1>
-  <p>Angular App Example</p></div>`},
-  '/src/app/app.component.ts': { 
-    code: `import { Component } from "@angular/core"; 
-import { appTitle } from './data';
+///file /src/app/data1.ts
+export const appTitle = "Angular1";
 
-@Component({ 
-    selector: "app-root",
-    templateUrl: "./app.component.html",
-    styleUrls: ["./app.component.css"]
+///ts
+import { VERSION } from '@angular/core';
+import { Component } from "@angular/core";
+import { appTitle } from '/src/app/data';
+
+@Component({
+  selector: "app-root",
+  templateUrl: "./app.component.html",
+  styleUrls: ["./app.component.css"]
 })
 export class AppComponent {
-    title = appTitle;
-}`},
-  '/src/app/data.ts': {
-    codeFile: 'https://bndynet.github.io/my-docs-site/code-editor-files/data.ts',
-  }
-}} />
+  title = appTitle;
+  version = VERSION.full;
+}
+
+///html
+<div class="text-center pt-4">
+<h1>{{ title }} <small>v{{ version }}</small></h1>
+<p>This is an angular component example.</p></div>
+
+///css
+p {
+  color: #696767ff
+}
+```
+````
+
+
+```editor ng-component showFileExplorer showLineNumbers
+///file /src/app/data.ts
+export const appTitle = "Angular";
+
+///file /src/app/data1.ts
+export const appTitle = "Angular1";
+
+///ts
+import { VERSION } from '@angular/core';
+import { Component } from "@angular/core";
+import { appTitle } from '/src/app/data';
+
+@Component({
+  selector: "app-root",
+  templateUrl: "./app.component.html",
+  styleUrls: ["./app.component.css"]
+})
+export class AppComponent {
+  title = appTitle;
+  version = VERSION.full;
+}
+
+///html
+<div class="text-center pt-4">
+<h1>{{ title }} <small>v{{ version }}</small></h1>
+<p>This is an angular component example.</p></div>
+
+///css
+p {
+  color: #696767ff
+}
+```
+
+
+## React
+
+````
+```editor react showFileExplorer showLineNumbers
+```
+````
+
+```editor react showFileExplorer showLineNumbers
+```
+
+## Vue.js
+
+````
+```editor vue showFileExplorer showLineNumbers
+```
+````
+
+```editor vue showFileExplorer showLineNumbers
+```
+
+## How to work
+
+```mermaid
+flowchart TB;
+    start(.mdx) --> a(MDXComponents);
+    a -- "\`\`\`" --> b(MyMDXCode);
+    a --> c("Other handlers in MDXComponents");
+    b -- "\`\`\`editor" --> d(MdxCode2Editor);
+    b -- "\`\`\`jsx" --> e["MDXCode in @theme/MDXComponents/Code"];
+    d -- "\`\`\`editor ng-component" --> f(NgComponent);
+    d -- "\`\`\`editor angular" --> g(CodeEditor);
+    f --> g;
+    g --> x(Sandpack);
+
+    style start fill:#2e8555,color:#fff
+    style a fill:#2e8555,color:#fff
+    style c fill:#2e8555,color:#fff
+    style e fill:#2e8555,color:#fff
+```

@@ -15,29 +15,35 @@ import { use, useEffect, useState } from 'react';
  * @param {Object} files - The initial set of files to be loaded into the Sandpack editor. {'App.js', {hidden: true, code: `console.log('Hi')`, codeFile: 'path/to/file'}}
  * @param {string} template - The template to use for the Sandpack editor, such as 'react', 'react-ts', 'vue', 'vue-ts', 'angular', 'solid', 'svelte', 'vanilla-ts', 'vanilla', 'node', 'nextjs', 'vite', 'vite-ts' or 'static'...
  */
-export default function LiveEditor({
-  files,
-  template,
-  showFileExplorer,
-  showLineNumbers,
-  customSetup,
-  theme,
-}) {
+export default function CodeEditor(props) {
+  let {
+    files,
+    template,
+    showFileExplorer,
+    showLineNumbers,
+    customSetup,
+    theme,
+  } = props;
   const options = {
     externalResources: ['https://cdn.tailwindcss.com'],
   };
+  const [allFiles, setAllFiles] = useState({});
+  const [loading, setLoading] = useState(true);
   const { colorMode, setColorMode } = useColorMode();
+
+  const filenamesNeedToLoad = Object.keys(files ?? {}).filter(
+    (filename) => files[filename] && files[filename].codeFile
+  );
+
   if (colorMode === 'dark' && !theme) {
     theme = 'dark';
   }
-  const [allFiles, setAllFiles] = useState({});
+
   useEffect(() => {
     async function loadFiles() {
-      const filenamesNeedToLoad = Object.keys(files).filter(
-        (filename) => files[filename] && files[filename].codeFile
-      );
       if (filenamesNeedToLoad.length === 0) {
         setAllFiles(files);
+        setLoading(false);
         return;
       }
       const promisesToLoadFiles = filenamesNeedToLoad.map((filename) =>
@@ -53,29 +59,41 @@ export default function LiveEditor({
           }));
         } else {
           // {status: 'rejected', reason: 'error'}
-          console.error(
-            'Failed to load file:',
-            filenamesNeedToLoad[results.indexOf(res)],
-            res.reason
-          );
+          const error = `Failed to load file ${
+            filenamesNeedToLoad[results.indexOf(res)]
+          } from ${
+            files[filenamesNeedToLoad[results.indexOf(res)]].codeFile
+          }: ${res.reason}`;
+          setAllFiles(() => ({
+            ...files,
+            [filenamesNeedToLoad[results.indexOf(res)]]: {
+              code: '// ' + error,
+            },
+          }));
         }
       });
-      console.log('All files loaded:', allFiles);
+      setLoading(false);
     }
     loadFiles();
   }, []);
 
-  if (Object.keys(allFiles).length === 0) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 rounded-[4px]" style={{backgroundColor: 'var(--ifm-pre-background)'}}>
-        <div className="w-12 h-12 border-4 border-blue-500 border-dashed rounded-full animate-spin" style={{borderColor: 'var(--ifm-color-primary)'}}></div>
+      <div
+        className="flex items-center justify-center h-64 rounded-[4px]"
+        style={{ backgroundColor: 'var(--ifm-pre-background)' }}
+      >
+        <div
+          className="w-12 h-12 border-4 border-blue-500 border-dashed rounded-full animate-spin"
+          style={{ borderColor: 'var(--ifm-color-primary)' }}
+        ></div>
       </div>
     );
   }
 
   return (
     <SandpackProvider
-      key={allFiles && Object.keys(allFiles).length > 0 ? 'ready' : 'loading'}
+      key={loading ? 'loading' : 'ready'}
       template={template}
       files={allFiles}
       options={options}
