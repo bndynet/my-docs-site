@@ -33,6 +33,19 @@
   padding-bottom: 1rem;
 }
 
+/* overwrite existing component styles */
+.tabs.thin {
+  border-bottom: solid 1px var(--ifm-hr-background-color);
+  .tabs__item {
+    padding: 0.65rem 0.75rem;
+    border-bottom-width: 1px;
+    &:hover {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+  }
+}
+
 /* my styles */
 button.aa-DetachedSearchButton {
   border-radius: 20px;
