@@ -2,12 +2,12 @@ import {
   SandpackProvider,
   SandpackLayout,
   SandpackCodeEditor,
-  SandpackConsole,
   SandpackPreview,
   SandpackFileExplorer,
+  useSandpack,
 } from '@codesandbox/sandpack-react';
 import { useColorMode } from '@docusaurus/theme-common';
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 /**
  * LiveEditor is a React component that provides a live, multi-file code editor and preview environment for Angular, Vue, React and any node.js.
@@ -19,8 +19,9 @@ export default function CodeEditor(props) {
   let {
     files,
     template,
-    showFileExplorer,
-    showLineNumbers,
+    hideFileExplorer,
+    hideLineNumbers,
+    hideTabs,
     customSetup,
     theme,
   } = props;
@@ -115,12 +116,13 @@ export default function CodeEditor(props) {
             flexDirection: 'row',
           }}
         >
-          {showFileExplorer && (
+          {!hideFileExplorer && (
             <SandpackFileExplorer style={{ width: '220px' }} />
           )}
           <SandpackCodeEditor
-            showTabs
-            showLineNumbers={showLineNumbers}
+            showTabs={!hideTabs}
+            showLineNumbers={!hideLineNumbers}
+            showInlineErrors={true} 
             wrapContent
           />
         </div>

@@ -88,9 +88,60 @@ button.aa-DetachedSearchButton {
   background: var(--ifm-background-surface-color) !important;
 }
 
-// Code Editor
+// Live Editor
 .prism-code {
   font-size: 13px;
+}
+
+// Code Editor
+.sp-layout {
+  border-radius: var(--ifm-global-radius) !important;
+  border-color: var(--ifm-color-emphasis-200) !important;
+}
+.sp-navigator {
+  height: 46px !important;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.08rem;
+  padding: 0.8rem;
+  text-transform: uppercase;
+
+  border-bottom: none !important;
+  background: var(--ifm-color-emphasis-600) !important;
+  color: var(--ifm-color-content-inverse) !important;
+}
+.sp-preview-container {
+  // here to change the background of iframe, by default iframe is transparent
+}
+.sp-input {
+  border: none !important;
+  color: var(--ifm-color-content) !important;
+  background-color: var(--ifm-color-emphasis-200) !important;
+}
+.sp-loading {
+  background-color: var(--ifm-color-emphasis-100) !important;
+}
+.sp-file-explorer {
+  background-color: var(--ifm-color-emphasis-200) !important;
+}
+.sp-tabs {
+  background: var(--ifm-color-emphasis-200) !important;
+}
+.sp-code-editor,
+.cm-editor,
+.cm-gutters {
+  background-color: var(--ifm-color-emphasis-100) !important;
+}
+.sp-button:hover,
+.sp-tab-button:hover {
+  color: var(--ifm-color-primary) !important;
+}
+html[data-theme='dark'] {
+  .sp-code-editor,
+  .cm-editor,
+  .cm-gutters {
+    background-color: var(--ifm-color-emphasis-100) !important;
+  }
 }
 
 // showcase page
