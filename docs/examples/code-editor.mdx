@@ -147,6 +147,32 @@ p {
 ```editor vue
 ```
 
+## Put local files into the editor
+
+First to add a package into **node_modules** folder.
+```js
+import bundleJs from "!!raw-loader!./bundle.js"; // load the source code of bundle.js
+
+files['/node_modules/@bndynet/my-lib/package.json'] = {
+  hidden: true,
+  code: JSON.stringify({
+    name: '@bndynet/my-lib',
+    main: './index.js',
+  }),
+};
+files['/node_modules/@bndynet/my-lib/index.js'] = {
+  hidden: true,
+  code: `${bundleJs}`,
+};
+```
+
+Then you can import it in your code.
+```js
+import { myFunction } from '@bndynet/my-lib';
+myFunction();
+```
+
+
 ## How it works
 
 ```mermaid
