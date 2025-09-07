@@ -1,0 +1,53 @@
+# Live Codeblock
+
+## Use `jsx live`
+
+```jsx live
+function showComponent(props) {
+  class HelloWorld extends HTMLElement {
+    connectedCallback() {
+      this.textContent = `Hello ${this.getAttribute('name') || 'World'}!`;
+    }
+  }
+  if (!customElements.get('hello-world')) {
+    customElements.define('hello-world', HelloWorld);
+  }
+  const name = 'Bing';
+  return (
+    <div>
+      <hello-world name={name} onClick={() => alert(`Hi ${name}, it is me.`)}></hello-world>
+    </div>
+  );
+}
+```
+
+## Use `jsx live noInline`
+
+```jsx live noInline 
+const Hi = () => (<div>Hi there!</div>);
+
+render(<Hi />);
+```
+
+## Just write body
+
+Used following command to override the default Playground Provider component.
+So that we can write the body of the component directly, without needing to wrap it in a function or class.
+
+`npx docusaurus swizzle @docusaurus/theme-live-codeblock Playground/Provider --wrap`
+
+
+```jsx live
+const [loaded, setLoaded] = useState(false);
+
+useEffect(() => {
+  const timer = setTimeout(() => setLoaded(true), 5000);
+  return () => clearTimeout(timer);
+}, []);
+
+return (
+  <div>
+    {loaded ? <div>The component is loaded!</div> : <div className="w-6 h-6 border-2 border-solid border-blue-500 border-t-transparent rounded-full animate-spin"></div>}
+  </div>
+);
+```
