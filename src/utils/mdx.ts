@@ -1,4 +1,4 @@
-export function getBlockInCode(code, type) {
+export function getBlockInCode(code: string, type: string): string | undefined {
   const blocks = getBlocksInCode(code, type);
   if (blocks && blocks.length > 0) {
     return blocks[0];
@@ -6,7 +6,7 @@ export function getBlockInCode(code, type) {
   return undefined;
 }
 
-export function getBlocksInCode(code, type) {
+export function getBlocksInCode(code: string, type: string): string[] {
   const regex = new RegExp(`///${type}\\s*([\\s\\S]*?)(?=///\\w+|$)`, 'gi');
   const matches: string[] = [];
   let match;
@@ -14,4 +14,14 @@ export function getBlocksInCode(code, type) {
     matches.push(match[1].trim());
   }
   return matches;
+}
+
+export function wrapJsxLiveCode(code: string) {
+  const trimmed = code.trim();
+
+  if (/\b(import|export|function|class|render)\b/.test(trimmed)) {
+    return code;
+  }
+
+  return `function App() {\n${code}\n}`;
 }

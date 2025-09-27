@@ -1,0 +1,8 @@
+{
+  "label": "Demo",
+  "position": 100,
+  "link": {
+    "type": "generated-index",
+    "description": "Below is the preview list for live code blocks under the folder, use the plugin './docusaurus-plugins/codeblock-collector' to generate this index page."
+  }
+}
