@@ -1,0 +1,63 @@
+---
+id: iframe-communication
+title: iframe Communication
+---
+
+# iframe Communication
+
+## Theme by Query Parameter
+
+This site will append the `theme` query parameter with the value to the iframe URL if the src include the parameter key `theme`.
+
+```html
+<iframe
+  src="/examples/iframe-querystring.html?theme"
+  width="100%"
+  height="500px"
+  style={{ border: '1px solid #ccc', borderRadius: '0.5rem' }}
+></iframe>
+```
+
+<iframe
+  src="/examples/iframe-querystring.html?theme"
+  width="100%"
+  height="500px"
+  style={{ border: '1px solid #ccc', borderRadius: '0.5rem' }}
+></iframe>
+
+
+## Theme by Post Message
+
+The postMessage approach allows dynamic theme changes without refresh the iframe after the iframe is loaded.
+So if it is the first to this page, this might not get the theme until the user toggles the theme.
+
+```html title="your-mdx-file.mdx"
+<iframe
+  src="/examples/iframe-postMessage.html"
+  width="100%"
+  height="500px"
+  style={{ border: '1px solid #ccc', borderRadius: '0.5rem' }}
+></iframe>
+```
+
+```javascript title="/examples/iframe-postMessage.html"
+<script>
+  window.addEventListener('message', (event) => {
+    const eventType = event.data.type;
+    if (eventType === 'themeChanged') {
+      const theme = event.data.theme;
+      // TODO: apply the theme to the iframe content
+    }
+  });
+
+  // Request the current theme from the host page
+  window.parent.postMessage({ type: 'requestTheme' }, '*');
+</script>
+```
+
+<iframe
+  src="/examples/iframe-postMessage.html"
+  width="100%"
+  height="500px"
+  style={{ border: '1px solid #ccc', borderRadius: '0.5rem' }}
+></iframe>

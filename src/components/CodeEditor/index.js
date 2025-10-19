@@ -4,10 +4,10 @@ import {
   SandpackCodeEditor,
   SandpackPreview,
   SandpackFileExplorer,
-  useSandpack,
 } from '@codesandbox/sandpack-react';
 import { useColorMode } from '@docusaurus/theme-common';
 import { useEffect, useState } from 'react';
+
 
 /**
  * LiveEditor is a React component that provides a live, multi-file code editor and preview environment for Angular, Vue, React and any node.js.
@@ -75,6 +75,7 @@ export default function CodeEditor(props) {
       });
       setLoading(false);
     }
+
     loadFiles();
   }, []);
 
@@ -90,6 +91,24 @@ export default function CodeEditor(props) {
         ></div>
       </div>
     );
+  }
+
+  function onPreviewRef(instance) {
+    if (instance && instance.getClient) {
+      const client = instance.getClient();
+      if (client) {
+        const iframe = client.iframe;
+        if (iframe) {
+          const src = iframe.src;
+          if (src) {
+            const newSrc = appendThemeToUrl(src);
+            if (src !== newSrc) {
+              iframe.src = newSrc;
+            }
+          }
+        }
+      }
+    }
   }
 
   return (
@@ -108,6 +127,7 @@ export default function CodeEditor(props) {
           showNavigator={false}
           style={{ height: '500px' }}
           showOpenInCodeSandbox={false}
+          ref={onPreviewRef}
         />
         <div
           style={{
@@ -122,7 +142,7 @@ export default function CodeEditor(props) {
           <SandpackCodeEditor
             showTabs={!hideTabs}
             showLineNumbers={!hideLineNumbers}
-            showInlineErrors={true} 
+            showInlineErrors={true}
             wrapContent
           />
         </div>

@@ -39,9 +39,10 @@ export const appTitle = "Angular";
 
 ///file /src/app/app.component.html
 <h1 class="p-4 text-center"> {{ appTitle }}</h1>
+<small class="text-center d-block" *ngIf="hostTheme">Current theme: {{ hostTheme }}</small>
 
 ///file /src/app/app.component.ts
-import { Component } from "@angular/core";
+import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { appTitle } from '/src/app/data.ts';
 
 @Component({
@@ -49,8 +50,14 @@ import { appTitle } from '/src/app/data.ts';
   templateUrl: "./app.component.html",
   styleUrls: ["./app.component.css"]
 })
-export class AppComponent {
+export class AppComponent implements OnInit, OnDestroy {
   appTitle = appTitle;
+  hostTheme = '';
+
+  constructor() {
+    const params = new URL(location.href).searchParams;
+    this.hostTheme = params.get('theme') || '';
+  }
 }           
 ```
 
