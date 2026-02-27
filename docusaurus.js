@@ -23,7 +23,6 @@ const getConfig = (app) => (
     projectName: app.githubRepo, // Usually your repo name.
 
     onBrokenLinks: 'log',
-    onBrokenMarkdownLinks: 'warn',
 
     // Even if you don't use internalization, you can use this field to set useful
     // metadata like html lang. For example, if your site is Chinese, you may want
@@ -35,6 +34,9 @@ const getConfig = (app) => (
 
     markdown: {
       mermaid: true,
+      hooks: {
+        onBrokenMarkdownLinks: 'warn',
+      }
     },
 
     presets: [
