@@ -4,8 +4,8 @@ const path = require('path');
 const lightCodeTheme = require('prism-react-renderer').themes.github;
 const darkCodeTheme = require('prism-react-renderer').themes.dracula;
 
-const getConfig = (app) => (
-  {
+const getConfig = (app) => {
+  return {
     title: app.title,
     tagline: app.tagline,
     favicon: 'img/favicon.ico',
@@ -36,7 +36,7 @@ const getConfig = (app) => (
       mermaid: true,
       hooks: {
         onBrokenMarkdownLinks: 'warn',
-      }
+      },
     },
 
     presets: [
@@ -45,6 +45,8 @@ const getConfig = (app) => (
         /** @type {import('@docusaurus/preset-classic').Options} */
         ({
           docs: {
+            path: app.docsRootPath,
+            routeBasePath: app.docsRootUrl ?? '/',
             sidebarPath: require.resolve('./sidebars.js'),
             // Please change this to your repo.
             // Remove this to remove the "edit this page" links.
@@ -55,8 +57,7 @@ const getConfig = (app) => (
             showReadingTime: true,
             // Please change this to your repo.
             // Remove this to remove the "edit this page" links.
-            editUrl:
-              `https://github.com/${app.githubUser}/${app.githubRepo}/tree/main/website/`,
+            editUrl: `https://github.com/${app.githubUser}/${app.githubRepo}/tree/main/website/`,
           },
           theme: {
             customCss: require.resolve('./src/css/custom.scss'),
@@ -80,7 +81,17 @@ const getConfig = (app) => (
             alt: app.title,
             src: app.logoUrl,
           },
-          items: app.menus,
+          items: app.menus.map(m => {
+            if (!m.docsPath) {
+              return m;
+            }
+            return {
+              type: 'docSidebar',
+              sidebarId: m.label,
+              position: 'left',
+              label: m.label,
+            };
+          }),
         },
         footer: {
           style: 'dark',
@@ -121,10 +132,13 @@ const getConfig = (app) => (
     plugins: [
       'docusaurus-plugin-zooming',
       'docusaurus-plugin-sass',
-      ['@easyops-cn/docusaurus-search-local', {
-        hashed: true,
-        indexPages: true,
-      }],
+      [
+        '@easyops-cn/docusaurus-search-local',
+        {
+          hashed: true,
+          indexPages: true,
+        },
+      ],
       //   (context, options) => {
       //     return {
       //       name: 'my-dev-server',
@@ -154,7 +168,8 @@ const getConfig = (app) => (
     scripts: app.externalScripts,
 
     clientModules: ['./static/app.js'],
-  });
+  };
+};
 
 module.exports = {
   getConfig,

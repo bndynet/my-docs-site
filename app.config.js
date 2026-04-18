@@ -10,17 +10,26 @@ module.exports = {
   githubUser: 'bndynet',
   githubRepo: 'my-docs-site',
   copyright: `Copyright © ${new Date().getFullYear()} <a href="https://bndy.net" target="_blank">BNDY-NET</a>`,
-  docMenuLabel: 'Docs',
+  docsRootPath: 'docs',
+  docsRootUrl: '/',
   get menus() {
     return [
       {
-        type: 'docSidebar',
-        sidebarId: 'tutorialSidebar',
+        label: 'Docs',
+        docsPath: '.',
+      },
+      {
+        label: 'Basics',
         position: 'left',
-        label: this.docMenuLabel,
+        docsPath: 'tutorial-basics',
+      },
+      {
+        label: 'Extras',
+        position: 'left',
+        docsPath: 'tutorial-extras',
       },
       { to: '/blog', label: 'Blog', position: 'left' },
-      { to: '/showcase', label: 'Showcase', position: 'left' },
+      { to: '/iframe?url=https://bndy.net', label: 'External Link', position: 'left' },
       {
         href: `https://github.com/${this.githubUser}/${this.githubRepo}`,
         position: 'right',
@@ -35,15 +44,6 @@ module.exports = {
         items: [{
           html: `<img src="${this.footerLogoUrl.startsWith('http') ? this.footerLogoUrl : this.baseUrl + this.footerLogoUrl}" style="height: 150px; position: relative;" />`,
         }],
-      },
-      {
-        title: 'Docs',
-        items: [
-          {
-            label: this.docMenuLabel,
-            to: '/docs/intro',
-          },
-        ],
       },
       {
         title: 'Community',
