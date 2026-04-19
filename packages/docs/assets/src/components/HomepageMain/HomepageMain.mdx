@@ -1,0 +1,140 @@
+## Customize homepage
+
+You are looking at the default homepage shipped by `@bndynet/docs`. Depending on how much you want to change, there are four layers of override — pick the smallest one that does the job. In every layer, a same-path file at your site root wins over the packaged copy; the template package itself is never touched.
+
+| Layer | Change this | By editing (same-path file at your site root) |
+|---|---|---|
+| 1 | Hero title / subtitle / button / background | `docs.config.js` → `hero` block |
+| 2 | Just the text and code samples you are reading | `src/components/HomepageMain/HomepageMain.mdx` |
+| 3 | The layout around the text (section / container / columns) | `src/components/HomepageMain/index.js` |
+| 4 | Everything — hero, main, the whole page | `src/pages/index.js` |
+
+### Layer 1 — tweak the hero
+
+Edit the `hero` block in `docs.config.js`. No file overrides needed:
+
+```js title="docs.config.js"
+module.exports = {
+  // …
+  hero: {
+    title: 'Welcome',
+    subtitle: 'The docs you came here for',
+    button: { label: 'Read the docs →', href: '/intro' },
+    link: { label: 'View on GitHub', href: 'https://github.com/…' },
+    // background: { color: '#0ea5e9', image: '/img/hero.jpg', overlay: 'rgba(0,0,0,0.4)' },
+  },
+};
+```
+
+### Layer 2 — swap just the text
+
+Everything you are reading below the hero lives in a single MDX file. Drop your own copy at the same path and edit it like any Markdown file — the packaged layout keeps wrapping it:
+
+```text
+src/components/HomepageMain/HomepageMain.mdx
+```
+
+### Layer 3 — swap the layout shell
+
+If you need a different wrapper around the text (wider container, custom classes, background, etc.), add:
+
+```text
+src/components/HomepageMain/index.js
+```
+
+If you want to keep the packaged copy inside your own wrapper, import it **directly from the npm package** (bypassing the `@site` resolver so you pull in the original, not your own MDX override):
+
+```jsx title="src/components/HomepageMain/index.js"
+import React from 'react';
+import Content from '@bndynet/docs/assets/src/components/HomepageMain/HomepageMain.mdx';
+
+export default function HomepageMain() {
+  return (
+    <section className="my-custom-wrapper">
+      <Content />
+    </section>
+  );
+}
+```
+
+### Layer 4 — replace the whole page
+
+For full control over hero + main + any custom sections, create:
+
+```text
+src/pages/index.js
+```
+
+A minimal starter you can copy:
+
+```jsx title="src/pages/index.js"
+import React from 'react';
+import Layout from '@theme/Layout';
+import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
+// Optional: reuse components shipped by @bndynet/docs
+// import HomepageFeatures from '@site/src/components/HomepageFeatures';
+
+export default function Home() {
+  const {siteConfig} = useDocusaurusContext();
+  return (
+    <Layout title={siteConfig.title} description={siteConfig.tagline}>
+      <main style={{padding: '4rem 1rem', textAlign: 'center'}}>
+        <h1>Welcome to {siteConfig.title}</h1>
+        <p>{siteConfig.tagline}</p>
+        {/* <HomepageFeatures /> */}
+      </main>
+    </Layout>
+  );
+}
+```
+
+**Heads up:** once `<siteDir>/src/pages/` exists, Docusaurus serves **every** page from there. If you still want the template's built-in pages (e.g. `/iframe`, `/markdown-page`), copy them from `node_modules/@bndynet/docs/assets/src/pages/` alongside your new `index.js`.
+
+See [Docusaurus — Creating Pages](https://docusaurus.io/docs/creating-pages) for the full page API.
+
+## Customize styles
+
+Global styles live in `src/css/custom.scss`. Drop a same-path file at your site root to swap them out:
+
+```text
+src/css/custom.scss
+```
+
+The file you provide **replaces** the packaged default entirely — it is not merged. To keep the shipped baseline (Infima color variables, navbar/footer polish, search-bar tweaks) and only override a few values, import it first:
+
+```scss title="src/css/custom.scss"
+@import '@bndynet/docs/assets/src/css/custom.scss';
+
+:root {
+  --ifm-color-primary: #7c3aed;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #a78bfa;
+}
+```
+
+For component-scoped styles, drop a same-path CSS module — e.g. `src/pages/index.module.css` or `src/components/HomepageFeatures/styles.module.css`. The resolver prefers your copy; the package version is ignored for that path.
+
+Third-party stylesheets (web fonts, CDN UI libraries) belong in `externalStylesheets` alongside `externalScripts` — see the next section.
+
+## Add custom scripts
+
+Use `externalScripts` in `docs.config.js` for both CDN scripts and your own locally-served files. Entries starting with `/` are served from `static/` and are automatically **baseUrl-safe**, so the same config works under `/` and `/my-project/` deploys.
+
+```js title="docs.config.js"
+module.exports = {
+  // …
+  externalScripts: [
+    'https://cdn.example.com/analytics.js', // remote URL, loaded as-is
+    '/my-widget.js',                        // from static/, baseUrl-safe
+  ],
+  externalStylesheets: [
+    'https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap',
+  ],
+};
+```
+
+For the `/my-widget.js` entry above, drop the actual file at `static/my-widget.js`. It loads as a classic `<script>` tag on every page.
+
+If you need code that runs *inside* the React runtime (route-change hooks, theme callbacks, etc.), drop a `static/app.js`. The template auto-registers it as a Docusaurus [client module](https://docusaurus.io/docs/advanced/client#client-modules) in place of the shipped one — so if you want to keep the built-in iframe/theme bootstrap, copy `node_modules/@bndynet/docs/assets/static/app.js` as your starting point before editing.

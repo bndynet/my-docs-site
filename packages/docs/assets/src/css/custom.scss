@@ -30,7 +30,11 @@
 }
 
 .footer {
-  padding-bottom: 1rem;
+  padding: 1rem;
+
+  .footer__links {
+    margin-top: 1rem;
+  }
 }
 
 /* overwrite existing component styles */

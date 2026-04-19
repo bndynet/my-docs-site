@@ -2,38 +2,28 @@
   "name": "my-docs-site",
   "version": "0.0.0",
   "private": true,
+  "description": "Documentation site built on @bndynet/docs. Site settings live in docs.config.js; all template assets live in packages/docs/assets/.",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "docusaurus": "docusaurus",
-    "start": "docusaurus start",
-    "build": "docusaurus build --config ./docusaurus-prod.config.js",
-    "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy",
-    "clear": "docusaurus clear",
-    "serve": "docusaurus serve",
-    "write-translations": "docusaurus write-translations",
-    "write-heading-ids": "docusaurus write-heading-ids"
+    "start": "docs dev",
+    "dev": "docs dev",
+    "build": "docs build --config ./docs.config.prod.js",
+    "serve": "docs serve",
+    "clear": "docs clear",
+    "deploy": "docs deploy --config ./docs.config.prod.js",
+    "version": "npm version -w @bndynet/docs",
+    "publish:docs": "npm publish -w @bndynet/docs --access public"
   },
   "dependencies": {
-    "@codesandbox/sandpack-react": "^2.20.0",
-    "@docusaurus/core": "^3.10.0",
-    "@docusaurus/preset-classic": "^3.10.0",
-    "@docusaurus/theme-live-codeblock": "^3.10.0",
-    "@docusaurus/theme-mermaid": "^3.10.0",
-    "@easyops-cn/docusaurus-search-local": "^0.55.1",
-    "@mdx-js/react": "^3.1.0",
-    "clsx": "^2.1.1",
-    "docusaurus-plugin-sass": "^0.2.6",
-    "docusaurus-plugin-search-local": "^2.1.2",
-    "docusaurus-plugin-zooming": "^1.0.0",
-    "prism-react-renderer": "^2.4.1",
-    "raw-loader": "^4.0.2",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "sass": "^1.90.0"
+    "@bndynet/docs": "*"
   },
-  "devDependencies": {
-    "@docusaurus/module-type-aliases": "^3.10.0",
-    "@docusaurus/types": "^3.10.0"
+  "overrides": {
+    "webpack": "5.106.2",
+    "@docusaurus/core": "3.10.0",
+    "@docusaurus/theme-common": "3.10.0",
+    "@docusaurus/theme-classic": "3.10.0"
   },
   "browserslist": {
     "production": [

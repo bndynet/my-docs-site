@@ -1,0 +1,49 @@
+{
+  "name": "@bndynet/docs",
+  "version": "0.1.0",
+  "description": "Docusaurus site driven by a single docs.config.js. Ships the full template (theme, pages, static, styles) so consumers only need docs.config.js + this package.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bndynet/my-docs-site.git"
+  },
+  "main": "lib/index.cjs",
+  "types": "lib/types.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types.d.ts",
+      "require": "./lib/index.cjs",
+      "default": "./lib/index.cjs"
+    },
+    "./docusaurus.config.cjs": "./lib/docusaurus.config.cjs"
+  },
+  "bin": {
+    "docs": "bin/docs.cjs"
+  },
+  "files": [
+    "lib",
+    "bin",
+    "assets",
+    "template"
+  ],
+  "scripts": {},
+  "dependencies": {
+    "@codesandbox/sandpack-react": "^2.20.0",
+    "@docusaurus/core": "^3.10.0",
+    "@docusaurus/preset-classic": "^3.10.0",
+    "@docusaurus/theme-live-codeblock": "^3.10.0",
+    "@docusaurus/theme-mermaid": "^3.10.0",
+    "@easyops-cn/docusaurus-search-local": "^0.55.1",
+    "clsx": "^2.1.1",
+    "docusaurus-plugin-sass": "^0.2.6",
+    "docusaurus-plugin-zooming": "^1.0.0",
+    "jiti": "^2.4.2",
+    "prism-react-renderer": "^2.4.1",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "sass": "^1.90.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
