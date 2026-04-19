@@ -1,0 +1,11 @@
+# Blog authors referenced by `authors: [<key>]` in each post's frontmatter.
+# Edit the profile below or add new authors as needed.
+# Docs: https://docusaurus.io/docs/blog#global-authors
+bndy:
+  name: Your Name
+  title: Maintainer
+  url: https://example.com
+  # image_url: /img/avatar.png
+  # socials:
+  #   github: your-handle
+  #   x: your-handle

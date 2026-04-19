@@ -9,11 +9,14 @@ module.exports = {
   logo: 'img/logo.svg',
   url: 'https://example.com',
   baseUrl: '/',
-  blog: false,
   copyright: `Copyright © ${new Date().getFullYear()} My Project`,
   mdxRoot: './docs',
+  blog: true,
+  // `blog` defaults to true; set `blog: false` to disable the blog plugin
+  // (also remove the Blog nav item below and delete the `blog/` directory).
   nav: [
     { label: 'Docs', docsPath: '.' },
+    { label: 'Blog', href: '/blog' },
   ],
   theme: {
     image: 'img/docusaurus-social-card.jpg',

@@ -437,9 +437,20 @@ function runInit(argv) {
     console.log(`created ${path.relative(process.cwd(), docsDir) || docsDir}/intro.md`);
   }
 
-  // Seed a minimal package.json so `npm install` works out of the box and so
-  // we can land the webpackbar `overrides` where npm actually honours them
-  // (root of the install tree).
+  // Seed the blog plugin. Scaffold defaults enable `/blog` + a Blog nav item,
+  // so we ship a buildable post (frontmatter includes `date` + a referenced
+  // author from authors.yml). Idempotent: skip if the user already has blog/.
+  const blogSrc = path.join(TEMPLATE_DIR, 'blog');
+  const blogDst = path.join(target, 'blog');
+  if (fs.existsSync(blogSrc) && !fs.existsSync(blogDst)) {
+    fs.mkdirSync(blogDst, { recursive: true });
+    for (const name of fs.readdirSync(blogSrc)) {
+      fs.copyFileSync(path.join(blogSrc, name), path.join(blogDst, name));
+      const rel = path.relative(process.cwd(), path.join(blogDst, name));
+      console.log(`created ${rel || path.join(blogDst, name)}`);
+    }
+  }
+
   ensureStarterPackage(target);
 
   const rel = path.relative(process.cwd(), target);
@@ -542,7 +553,7 @@ function printHelp(code) {
       'Usage: docs <command> [options]',
       '',
       'Commands:',
-      '  init [dir]   Scaffold a minimal docs.config.js (+ docs/intro.md)',
+      '  init [dir]   Scaffold docs.config.js (+ docs/intro.md, blog/welcome.md, authors.yml)',
       '  dev|start    Run the Docusaurus dev server',
       '  build        Build the site for production',
       '  serve        Serve a production build',
