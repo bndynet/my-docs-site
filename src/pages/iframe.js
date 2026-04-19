@@ -6,11 +6,6 @@ import { EVENT_THEME_CHANGE } from '../theme/ColorModeToggle';
 
 const DEFAULT_THEME = 'light';
 
-const initialTheme =
-  typeof window !== 'undefined' && typeof window.getCurrentTheme === 'function'
-    ? window.getCurrentTheme()
-    : DEFAULT_THEME;
-
 function updateThemeInUrl(url, newTheme) {
   if (!newTheme || !url) {
     return url;
@@ -18,32 +13,36 @@ function updateThemeInUrl(url, newTheme) {
   const urlObj = new URL(url);
   urlObj.searchParams.set("theme", newTheme);
   return urlObj.toString();
-
 }
 
-export default function Showcase() {
-  const searchParams = new URLSearchParams(window.location.search);
-  const paramUrl = searchParams.get('url');
-
+export default function IframePage() {
   const { siteConfig } = useDocusaurusContext();
-  const [theme, setTheme] = useState(initialTheme);
-  const [url, setUrl] = useState(updateThemeInUrl(paramUrl, theme));
+  const [theme, setTheme] = useState(DEFAULT_THEME);
+  const [url, setUrl] = useState(null);
 
   useEffect(() => {
-    function onThemeChange(_event) {
-      if (typeof window.getCurrentTheme !== 'function') return;
+    const searchParams = new URLSearchParams(window.location.search);
+    const p = searchParams.get('url');
+    const t =
+      typeof window.getCurrentTheme === 'function'
+        ? window.getCurrentTheme()
+        : DEFAULT_THEME;
+    setTheme(t);
+    setUrl(updateThemeInUrl(p, t));
 
+    function onThemeChange() {
+      if (typeof window.getCurrentTheme !== 'function') return;
       const nextTheme = window.getCurrentTheme();
-      setUrl(updateThemeInUrl(paramUrl, nextTheme));
+      setUrl(updateThemeInUrl(p, nextTheme));
       setTheme(nextTheme);
     }
 
-    onThemeChange();
     window.addEventListener(EVENT_THEME_CHANGE, onThemeChange);
     return () => {
       window.removeEventListener(EVENT_THEME_CHANGE, onThemeChange);
     };
   }, []);
+
   return (
     <Layout
       title={`${siteConfig.title}`}
