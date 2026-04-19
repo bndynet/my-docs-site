@@ -134,16 +134,28 @@ Docusaurus versions are pinned in **two** places and must stay in lockstep
      "@docusaurus/theme-mermaid": "3.10.0"
    },
    "overrides": {
-     "webpack": "5.105.4",
+     "webpackbar": "^7.0.0",
+     "webpack": "5.106.2",
      "@docusaurus/core": "3.10.0",
      "@docusaurus/theme-common": "3.10.0",
      "@docusaurus/theme-classic": "3.10.0"
    }
    ```
-   The `overrides` block forces transitive deps (e.g. `theme-common` pulled
-   in by a plugin on an older pin) onto the same version. Keep `webpack` at
-   `5.105.x` for now: `5.106+` tightens `ProgressPlugin` validation and breaks
-   the Docusaurus bundler until upstream adjusts.
+   The `@docusaurus/*` entries force transitive deps (e.g. `theme-common`
+   pulled in by a plugin on an older pin) onto the same version.
+
+   > **TODO(docusaurus-3.10.1)** — the `"webpackbar": "^7.0.0"` line is a
+   > temporary workaround. Docusaurus 3.10.x ships `@docusaurus/bundler`
+   > pinned to `webpackbar@^6.0.1`, which passes unknown options
+   > (`name`/`color`/`reporters`/`reporter`) to webpack's `ProgressPlugin`.
+   > `webpack@5.106+` tightened `ProgressPlugin` schema validation
+   > (`additionalProperties: false`) and throws a `ValidationError` at
+   > startup. `webpackbar@7.0.0` fixes the shape. Drop this override as soon
+   > as Docusaurus ships with `webpackbar@^7`
+   > ([facebook/docusaurus#11923](https://github.com/facebook/docusaurus/issues/11923)).
+   > The CLI also warns at `dev`/`build` when the incompatible combination
+   > is detected — grep for `TODO(docusaurus-3.10.1)` to find every piece
+   > to remove.
 2. `packages/docs/package.json` — `peerDependencies` are `*`, so nothing to
    bump there unless you want to declare a new *minimum* version.
 
@@ -210,11 +222,30 @@ sidebar, the `/iframe` route, and dark/light toggle.
    changed `DocsConfig`, the CLI flag set, or any consumer-visible
    `@site/*` path; **minor** for additive features; **patch** for fixes).
 2. Update `packages/docs/README.md` if the public surface changed.
-3. Publish:
+3. Run the end-to-end consumer smoke test (one command — packs locally,
+   scaffolds a clean project in a tempdir, installs, builds, and also
+   exercises the init merge/preserve/idempotent and `type: commonjs`
+   guard paths):
+   ```bash
+   npm run verify:local
+   ```
+   Pass `KEEP=1 npm run verify:local` to keep the tempdir for inspection,
+   or `VERBOSE=1 ...` to stream `npm install` / `docs build` output.
+
+   To eyeball the scaffolded project yourself instead of just CI-style
+   assertions, generate a real, runnable demo in the current directory:
+   ```bash
+   npm run demo:local                 # → ./bndy-demo (default name)
+   npm run demo:local -- my-demo      # → ./my-demo
+   cd bndy-demo && npm start          # http://localhost:3000
+   ```
+   The default name (`bndy-demo`) is gitignored. Delete the dir with
+   `rm -rf bndy-demo` when you're done.
+4. Publish:
    ```bash
    cd packages/docs && npm publish --access public
    ```
-4. Consumers pick up the change on their next `npm install`.
+5. Consumers pick up the change on their next `npm install`.
 
 ## Troubleshooting
 
@@ -225,3 +256,27 @@ sidebar, the `/iframe` route, and dark/light toggle.
   as above: multiple `@docusaurus/theme-common` copies. Deduplicate.
 - **`Cannot find @docusaurus/core`** — CLI couldn't locate Docusaurus. Make
   sure it's in the root's `dependencies` (or install at the siteDir).
+- **`ValidationError: Progress Plugin has been initialized using an options
+  object that does not match the API schema`** (`name`/`color`/`reporters`/
+  `reporter` flagged as additional properties) — `webpackbar@6.x` (transitive
+  from `@docusaurus/bundler@3.10.x`) is incompatible with `webpack@5.106+`.
+  Fix: add `"webpackbar": "^7.0.0"` to the **root** `package.json` `overrides`,
+  then `rm -rf node_modules package-lock.json && npm install`. `docs init`
+  scaffolds this override automatically for fresh projects. Remove the line
+  once [facebook/docusaurus#11923](https://github.com/facebook/docusaurus/issues/11923)
+  lands — search the repo for `TODO(docusaurus-3.10.1)`.
+- **`'import' and 'export' may appear only with 'sourceType: module'`** (in
+  generated `.docusaurus/*.js`, `@easyops-cn/docusaurus-search-local` output,
+  etc.) — your root `package.json` has `"type": "commonjs"`. Webpack uses the
+  nearest `package.json#type` to decide how to parse `.js` files, and
+  `commonjs` rejects the ES module syntax Docusaurus emits. Fix: delete the
+  `"type": "commonjs"` line (or change it to `"type": "module"`). `docs
+  dev`/`build` now fails fast with this exact message if the field is present.
+- **`Module not found: Error: Can't resolve '@mermaid-js/layout-elk'`** —
+  `@docusaurus/theme-mermaid@3.10.x` treats `@mermaid-js/layout-elk` as an
+  optional peer but webpack 5.106+ doesn't reliably tree-shake the dead
+  `import()` when the package is absent. `@bndynet/docs` installs a
+  `resolve.alias → false` stub automatically when the package isn't resolvable,
+  so no action is required. If you actually want the ELK layout, `npm install
+  @mermaid-js/layout-elk@^0.1.9` and the stub steps aside. Remove the
+  workaround once upstream lands a fix — search for `TODO(docusaurus-3.10.x)`.

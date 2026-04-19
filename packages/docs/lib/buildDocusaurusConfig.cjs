@@ -208,16 +208,83 @@ class DocsResolvePlugin {
   }
 }
 
+/**
+ * In a consumer setup, `@bndynet/docs` is a real npm install and its shipped
+ * theme swizzles/pages live at
+ *   <siteDir>/node_modules/@bndynet/docs/assets/src/...
+ * Docusaurus's default `babel-loader` rule has `exclude: /node_modules/`, so
+ * those TSX/JSX files never get transpiled and webpack emits the classic
+ *   "Module parse failed: Unexpected token ... no loaders are configured to
+ *    process this file type"
+ * against our `@theme/ColorModeToggle` et al.
+ *
+ * Fix: register a sibling rule that applies Docusaurus's own JS loader (same
+ * babel config as the core rule) to files under our assets directory.
+ *
+ * The rule is only emitted when ASSETS.dir actually sits inside
+ * `node_modules/` (i.e., consumer mode). In a workspaces / symlinked monorepo
+ * setup the real path is a subdirectory of the siteDir and already matches
+ * the default rule; adding this would cause every asset file to be
+ * double-transpiled.
+ */
+const ASSETS_IN_NODE_MODULES = ASSETS.dir
+  .split(path.sep)
+  .includes('node_modules');
+
+/**
+ * `@docusaurus/theme-mermaid@3.10.x` treats `@mermaid-js/layout-elk` as an
+ * optional peer dependency: it probes availability at config time and feeds
+ * `DefinePlugin({__DOCUSAURUS_MERMAID_LAYOUT_ELK_ENABLED__: <bool>})` so the
+ * dynamic `await import('@mermaid-js/layout-elk')` inside the theme's
+ * `loadMermaid.js` becomes dead code when the package is not installed.
+ *
+ * In practice webpack 5.106+ does not reliably tree-shake that dead branch
+ * for consumer-mode installs and fails the client build with:
+ *   "Module not found: Error: Can't resolve '@mermaid-js/layout-elk'
+ *    in '.../node_modules/@docusaurus/theme-mermaid/lib/client'".
+ * We install a `resolve.alias` -> false stub *only when the package isn't
+ * resolvable*, matching theme-mermaid's own detection logic so we never
+ * clobber a real installation. The alias returns an empty module that the
+ * (also dead) `__DOCUSAURUS_MERMAID_LAYOUT_ELK_ENABLED__` guard never reaches.
+ *
+ * TODO(docusaurus-3.10.x): drop once webpack reliably tree-shakes the dead
+ * import, or once theme-mermaid guards the import site (not just the call
+ * site) against missing packages.
+ */
+function isLayoutElkResolvable(siteDir) {
+  try {
+    require.resolve('@mermaid-js/layout-elk', { paths: [siteDir] });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function docsAliasPlugin({ siteDir }) {
   const themeAlias = buildThemeAliasMap({ siteDir });
+  const layoutElkResolvable = isLayoutElkResolvable(siteDir);
   return {
     name: '@bndynet/docs-alias',
-    configureWebpack() {
+    configureWebpack(_config, isServer, utils) {
+      const extraRules = [];
+      if (ASSETS_IN_NODE_MODULES && utils && typeof utils.getJSLoader === 'function') {
+        extraRules.push({
+          test: /\.(j|t)sx?$/,
+          include: [ASSETS.dir],
+          use: [utils.getJSLoader({ isServer })],
+        });
+      }
+      const alias = { ...themeAlias };
+      if (!layoutElkResolvable) {
+        // TODO(docusaurus-3.10.x): see isLayoutElkResolvable comment above.
+        alias['@mermaid-js/layout-elk'] = false;
+      }
       return {
         resolve: {
-          alias: themeAlias,
+          alias,
           plugins: [new DocsResolvePlugin({ siteDir })],
         },
+        ...(extraRules.length ? { module: { rules: extraRules } } : {}),
       };
     },
   };

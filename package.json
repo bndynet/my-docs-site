@@ -14,12 +14,17 @@
     "clear": "docs clear",
     "deploy": "docs deploy --config ./docs.config.prod.js",
     "version": "npm version -w @bndynet/docs",
-    "publish:docs": "npm publish -w @bndynet/docs --access public"
+    "publish:docs": "npm publish -w @bndynet/docs --access public",
+    "verify:local": "bash scripts/verify-local-consumer.sh",
+    "demo:local": "bash scripts/verify-local-consumer.sh --demo",
+    "sync": "cli-sync -t ../my-docs-site-g"
   },
   "dependencies": {
     "@bndynet/docs": "*"
   },
+  "//": "TODO(docusaurus-3.10.1): drop `overrides.webpackbar` once @docusaurus/bundler depends on webpackbar@^7 (https://github.com/facebook/docusaurus/issues/11923). The @docusaurus/* pins dedupe across the monorepo and are unrelated to the webpackbar workaround.",
   "overrides": {
+    "webpackbar": "^7.0.0",
     "webpack": "5.106.2",
     "@docusaurus/core": "3.10.0",
     "@docusaurus/theme-common": "3.10.0",
@@ -39,5 +44,8 @@
   },
   "engines": {
     "node": ">=20.0"
+  },
+  "devDependencies": {
+    "@bndynet/cli": "^1.5.1"
   }
 }

@@ -18,3 +18,8 @@ node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Artifacts from scripts/verify-local-consumer.sh
+/packages/docs/bndynet-docs-*.tgz
+/bndy-demo/
+/bndy-demo-*/

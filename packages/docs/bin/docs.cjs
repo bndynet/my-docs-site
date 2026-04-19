@@ -137,6 +137,116 @@ function checkDocusaurusDedup(siteDir) {
   console.warn('       then remove node_modules + lockfile and reinstall.\n');
 }
 
+// ---------------------------------------------------------------------------
+// TODO(docusaurus-3.10.1): remove the entire webpackbar workaround once
+// @docusaurus/bundler publishes a version that depends on webpackbar@^7.
+//
+//   Search this repo for `TODO(docusaurus-3.10.1)` to find every piece:
+//     - checkWebpackbarCompat() below
+//     - its call site in runDocusaurus()
+//     - the STARTER_OVERRIDES block used by ensureStarterPackage()
+//     - the "overrides.webpackbar" line in the repo-root package.json
+//     - the "Troubleshooting: ProgressPlugin" section in README.md
+//
+// Context: Docusaurus 3.10.x pins @docusaurus/bundler -> webpackbar@^6.0.1.
+// webpackbar@6 assigns its own options (name/color/reporters/reporter) to the
+// `this.options` field inherited from webpack's ProgressPlugin. webpack@5.106+
+// tightened ProgressPlugin schema validation (additionalProperties: false) and
+// throws at compiler creation:
+//   ValidationError: Invalid options object. Progress Plugin has been
+//   initialized using an options object that does not match the API schema.
+// webpackbar fixed this in v7.0.0. Until Docusaurus bumps its dependency we
+// force webpackbar@^7 via `overrides` in the consumer's root package.json.
+// Tracking: https://github.com/facebook/docusaurus/issues/11923
+// ---------------------------------------------------------------------------
+function checkWebpackbarCompat(siteDir) {
+  const nm = path.join(siteDir, 'node_modules');
+  if (!fs.existsSync(nm)) return;
+
+  const readVersion = (p) => {
+    try {
+      return JSON.parse(fs.readFileSync(p, 'utf8')).version || null;
+    } catch {
+      return null;
+    }
+  };
+  const webpackVer = readVersion(path.join(nm, 'webpack', 'package.json'));
+  const webpackbarVer = readVersion(path.join(nm, 'webpackbar', 'package.json'));
+  if (!webpackVer || !webpackbarVer) return;
+
+  const parse = (v) => v.split('.').map((s) => parseInt(s, 10) || 0);
+  const [wpMaj, wpMin] = parse(webpackVer);
+  const [wbMaj] = parse(webpackbarVer);
+
+  const webpackStrict = wpMaj > 5 || (wpMaj === 5 && wpMin >= 106);
+  const webpackbarTooOld = wbMaj < 7;
+  if (!(webpackStrict && webpackbarTooOld)) return;
+
+  console.warn(
+    '[docs] WARNING: incompatible webpack + webpackbar versions detected.'
+  );
+  console.warn(
+    `        webpack@${webpackVer} enforces strict ProgressPlugin validation,`
+  );
+  console.warn(
+    `        but webpackbar@${webpackbarVer} (< 7) passes unknown options and`
+  );
+  console.warn(
+    '        will throw "Progress Plugin has been initialized using an options'
+  );
+  console.warn('        object that does not match the API schema".');
+  console.warn('[docs] Fix: add this to your root package.json and reinstall:');
+  console.warn('        "overrides": { "webpackbar": "^7.0.0" }');
+  console.warn('        rm -rf node_modules package-lock.json && npm install');
+  console.warn(
+    '[docs] Tracking: https://github.com/facebook/docusaurus/issues/11923\n'
+  );
+}
+
+/**
+ * Webpack 5 determines a `.js` file's sourceType by walking up to the nearest
+ * `package.json` and reading its `"type"` field. If the consumer's siteDir
+ * package.json has `"type": "commonjs"`, webpack parses every generated
+ * `.docusaurus/*.js` as CommonJS and dies with multiple copies of:
+ *   "'import' and 'export' may appear only with 'sourceType: module'"
+ * The failures happen in generated code far from anything the user wrote, so
+ * we fail fast here with a single clear message instead of letting webpack
+ * emit a fog of opaque parse errors.
+ *
+ * A missing `"type"` field means "auto" (webpack picks ESM from content), which
+ * is what Docusaurus expects. `"type": "module"` also works. Only `"commonjs"`
+ * is broken.
+ */
+function checkSitePackageType(siteDir) {
+  const pkgPath = path.join(siteDir, 'package.json');
+  let pkg;
+  try {
+    pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+  } catch {
+    return;
+  }
+  if (pkg.type !== 'commonjs') return;
+
+  const rel = path.relative(process.cwd(), pkgPath) || pkgPath;
+  console.error('[docs] ERROR: your package.json has `"type": "commonjs"`.');
+  console.error(
+    '        Docusaurus emits generated ES modules under `.docusaurus/`.'
+  );
+  console.error(
+    '        webpack walks up to the nearest package.json to decide sourceType'
+  );
+  console.error(
+    '        and rejects the `import`/`export` in those files with:'
+  );
+  console.error(
+    "          \"'import' and 'export' may appear only with 'sourceType: module'\"."
+  );
+  console.error('[docs] Fix: open ' + rel);
+  console.error('        and remove the `"type": "commonjs"` line');
+  console.error('        (or change it to `"type": "module"`), then rerun.');
+  process.exit(1);
+}
+
 /**
  * Docusaurus looks for a `babel.config.js` in the siteDir and uses it to
  * transform every generated `.js` file emitted into `.docusaurus/`. If that
@@ -159,6 +269,133 @@ function ensureBabelConfig(siteDir) {
       "module.exports = {\n" +
       "  presets: [require.resolve('@docusaurus/core/lib/babel/preset')],\n" +
       "};\n"
+  );
+}
+
+// TODO(docusaurus-3.10.1): drop STARTER_OVERRIDES (and the "//" note it carries)
+// once @docusaurus/bundler ships with webpackbar@^7. See checkWebpackbarCompat.
+const STARTER_OVERRIDES = {
+  webpackbar: '^7.0.0',
+};
+const STARTER_OVERRIDES_NOTE =
+  'TODO(docusaurus-3.10.1): remove `overrides.webpackbar` once @docusaurus/bundler depends on webpackbar@^7. ' +
+  'Tracking: https://github.com/facebook/docusaurus/issues/11923';
+
+/**
+ * Seed (or patch) the consumer's `package.json` so `@bndynet/docs` works out
+ * of the box. `npm overrides` only take effect in the *root* package.json of
+ * the install tree, so every workaround for a transitive-dep bug (like the
+ * webpackbar/webpack incompatibility) has to live there — we can't fix it
+ * from inside `@bndynet/docs` alone.
+ *
+ * Behavior:
+ *   - **No package.json yet** → write a complete starter (scripts, deps,
+ *     overrides, engines). This is the "scaffold" branch.
+ *   - **Existing package.json** → surgically fill in ONLY the override keys
+ *     declared in `STARTER_OVERRIDES` and only when they are missing. We
+ *     never overwrite an existing value (the user may have intentionally
+ *     pinned a different semver range), never touch other fields, and
+ *     preserve the file's detected indent + trailing newline.
+ *
+ * Running `docs init` is therefore idempotent: run it whenever you bump
+ * `@bndynet/docs` and any new managed overrides get filled in automatically.
+ * When an upstream bug gets fixed, the maintainer drops the entry from
+ * `STARTER_OVERRIDES` (and the related TODO-marked code), republishes, and
+ * downstream consumers remove the now-stale override by hand.
+ */
+function ensureStarterPackage(siteDir) {
+  const target = path.join(siteDir, 'package.json');
+  if (fs.existsSync(target)) {
+    return mergeStarterOverrides(target);
+  }
+
+  let docsVersion = '0.0.0';
+  try {
+    docsVersion = require(path.join(PKG_DIR, 'package.json')).version || docsVersion;
+  } catch {}
+
+  const name = (path.basename(siteDir) || 'my-docs-site')
+    .toLowerCase()
+    .replace(/[^a-z0-9._~-]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'my-docs-site';
+
+  const pkg = {
+    name,
+    version: '0.0.0',
+    private: true,
+    '//': STARTER_OVERRIDES_NOTE,
+    scripts: {
+      start: 'docs dev',
+      dev: 'docs dev',
+      build: 'docs build',
+      serve: 'docs serve',
+      clear: 'docs clear',
+    },
+    dependencies: {
+      '@bndynet/docs': `^${docsVersion}`,
+    },
+    overrides: { ...STARTER_OVERRIDES },
+    engines: {
+      node: '>=20.0.0',
+    },
+  };
+  fs.writeFileSync(target, JSON.stringify(pkg, null, 2) + '\n');
+  console.log(`created ${path.relative(process.cwd(), target) || target}`);
+}
+
+/**
+ * Idempotent merge: fill in any missing override key from `STARTER_OVERRIDES`
+ * into an existing `package.json`, preserving the file's indentation and
+ * trailing newline. Existing override values are *never* overwritten — if the
+ * consumer intentionally pinned a different range, `checkWebpackbarCompat`
+ * (and its siblings) will surface a runtime warning; we don't second-guess
+ * user intent silently.
+ *
+ * Returns nothing; logs a per-run summary to stdout.
+ */
+function mergeStarterOverrides(target) {
+  const rel = path.relative(process.cwd(), target) || target;
+  let raw;
+  try {
+    raw = fs.readFileSync(target, 'utf8');
+  } catch (err) {
+    console.warn(`skip (read failed): ${rel} — ${err.message}`);
+    return;
+  }
+  let pkg;
+  try {
+    pkg = JSON.parse(raw);
+  } catch (err) {
+    console.warn(`skip (not valid JSON): ${rel} — ${err.message}`);
+    console.warn('  fix the JSON and re-run `docs init` to sync overrides.');
+    return;
+  }
+
+  const overrides = pkg.overrides && typeof pkg.overrides === 'object' ? pkg.overrides : {};
+  const added = [];
+  for (const [key, val] of Object.entries(STARTER_OVERRIDES)) {
+    // Only fill when missing; respect any value the user has already set.
+    if (overrides[key] === undefined) {
+      overrides[key] = val;
+      added.push(`${key}: ${val}`);
+    }
+  }
+  if (!added.length) {
+    console.log(`skip (overrides already in place): ${rel}`);
+    return;
+  }
+  pkg.overrides = overrides;
+
+  // Preserve detected indent (tabs or spaces) and trailing newline.
+  const indentMatch = raw.match(/\n([ \t]+)"/);
+  const indent = indentMatch ? indentMatch[1] : '  ';
+  const trailing = raw.endsWith('\n') ? '\n' : '';
+  fs.writeFileSync(target, JSON.stringify(pkg, null, indent) + trailing);
+
+  console.log(`updated ${rel} — added ${added.length} override(s):`);
+  for (const line of added) console.log(`  + ${line}`);
+  console.log(
+    '  then: rm -rf node_modules package-lock.json && npm install'
   );
 }
 
@@ -200,6 +437,11 @@ function runInit(argv) {
     console.log(`created ${path.relative(process.cwd(), docsDir) || docsDir}/intro.md`);
   }
 
+  // Seed a minimal package.json so `npm install` works out of the box and so
+  // we can land the webpackbar `overrides` where npm actually honours them
+  // (root of the install tree).
+  ensureStarterPackage(target);
+
   const rel = path.relative(process.cwd(), target);
   const cd = !rel || rel === '.' ? '.' : rel;
   console.log(`\nNext: cd ${cd} && npm install && npx docs dev`);
@@ -223,12 +465,16 @@ function runDocusaurus(command, forwardArgs) {
   const { docsConfig, rest: cleanArgs } = extractDocsConfig(forwardArgs);
 
   const docusaurusCmd = command === 'dev' ? 'start' : command;
+  checkSitePackageType(siteDir);
   ensureBabelConfig(siteDir);
 
   // Warn early on duplicate Docusaurus packages for commands that actually
   // render React (dev/start/build). `serve`/`clear` don't need it.
   if (docusaurusCmd === 'start' || docusaurusCmd === 'build') {
     checkDocusaurusDedup(siteDir);
+    // TODO(docusaurus-3.10.1): remove this call when the workaround is no
+    // longer needed — see checkWebpackbarCompat().
+    checkWebpackbarCompat(siteDir);
   }
 
   // Always inject the packaged shim as Docusaurus's --config. The shim loads
