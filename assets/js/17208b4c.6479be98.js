@@ -1,0 +1,1 @@
+"use strict";(globalThis.webpackChunkmy_docs_site=globalThis.webpackChunkmy_docs_site||[]).push([[5660],{7293(t){t.exports=JSON.parse('{"authors":[{"name":"Bendy Zhang","title":"Maintainer of Site","url":"https://github.com/bndynet","imageURL":"https://static.bndy.net/images/logo.png","key":"bndy","page":null,"count":4}]}')}}]);
