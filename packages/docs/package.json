@@ -1,6 +1,6 @@
 {
   "name": "@bndynet/docs",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Docusaurus site driven by a single docs.config.js. Ships the full template (theme, pages, static, styles) so consumers only need docs.config.js + this package.",
   "license": "MIT",
   "repository": {

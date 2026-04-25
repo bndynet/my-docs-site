@@ -164,6 +164,13 @@ export interface DocsConfig {
   copyright?: string;
   /** Set `false` to disable the blog preset. Defaults to `true`. */
   blog?: boolean;
+  /**
+   * Blog sidebar column heading (the list next to post content on blog pages).
+   * Use this to match your copy locale, e.g. `'全部文章'`. Defaults to `'All posts'`.
+   * For Docusaurus multi-locale sites, you can still set this per-locale in
+   * `docs.config` variants or rely on `i18n` + plugin translation files.
+   */
+  blogSidebarTitle?: string;
   footer?: {
     style?: 'light' | 'dark';
     links?: Array<{

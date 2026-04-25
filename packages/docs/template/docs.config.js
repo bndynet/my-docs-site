@@ -11,9 +11,8 @@ module.exports = {
   baseUrl: '/',
   copyright: `Copyright © ${new Date().getFullYear()} My Project`,
   mdxRoot: './docs',
-  blog: true,
-  // `blog` defaults to true; set `blog: false` to disable the blog plugin
-  // (also remove the Blog nav item below and delete the `blog/` directory).
+  blog: true,  //set `blog: false` to disable the blog plugin(also remove the Blog nav item below and delete the `blog/` directory).
+  // blogSidebarTitle: 'All posts', // Optional: blog sidebar heading
   nav: [
     { label: 'Docs', docsPath: '.' },
     { label: 'Blog', href: '/blog' },

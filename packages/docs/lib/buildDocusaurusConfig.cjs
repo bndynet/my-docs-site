@@ -383,6 +383,12 @@ function buildDocusaurusConfig({ siteDir, app, docsPathRelative, blog, site }) {
     ? site.docsRouteBasePath
     : 'docs';
 
+  const defaultBlogSidebarTitle = 'All posts';
+  const blogSidebarTitle =
+    typeof site.blogSidebarTitle === 'string' && site.blogSidebarTitle.trim()
+      ? site.blogSidebarTitle.trim()
+      : defaultBlogSidebarTitle;
+
   // Rewrite a siteDir-relative asset path (e.g. `'img/hero.jpg'`) with the
   // current baseUrl so the same config works under `/` and `/project-name/`
   // deploys. Absolute/protocol-relative URLs pass through untouched.
@@ -449,6 +455,9 @@ function buildDocusaurusConfig({ siteDir, app, docsPathRelative, blog, site }) {
           blog: blog
             ? {
                 showReadingTime: true,
+                /** List every post in the blog sidebar (default Docusaurus is 5 + "Recent posts"). */
+                blogSidebarCount: 'ALL',
+                blogSidebarTitle,
               }
             : false,
           pages: {
