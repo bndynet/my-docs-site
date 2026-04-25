@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from '@docusaurus/router';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
 
@@ -17,31 +18,36 @@ function updateThemeInUrl(url, newTheme) {
 
 export default function IframePage() {
   const { siteConfig } = useDocusaurusContext();
+  const location = useLocation();
   const [theme, setTheme] = useState(DEFAULT_THEME);
-  const [url, setUrl] = useState(null);
+
+  // Re-derive the embedded URL from the live router location so navigating
+  // between two `/iframe?url=…` navbar items (same pathname, different
+  // query) actually swaps the iframe `src` instead of reusing the value
+  // captured on the first mount.
+  const sourceUrl = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('url');
+  }, [location.search]);
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const p = searchParams.get('url');
-    const t =
-      typeof window.getCurrentTheme === 'function'
-        ? window.getCurrentTheme()
-        : DEFAULT_THEME;
-    setTheme(t);
-    setUrl(updateThemeInUrl(p, t));
-
+    if (typeof window.getCurrentTheme === 'function') {
+      setTheme(window.getCurrentTheme());
+    }
     function onThemeChange() {
       if (typeof window.getCurrentTheme !== 'function') return;
-      const nextTheme = window.getCurrentTheme();
-      setUrl(updateThemeInUrl(p, nextTheme));
-      setTheme(nextTheme);
+      setTheme(window.getCurrentTheme());
     }
-
     window.addEventListener(EVENT_THEME_CHANGE, onThemeChange);
     return () => {
       window.removeEventListener(EVENT_THEME_CHANGE, onThemeChange);
     };
   }, []);
+
+  const url = useMemo(
+    () => updateThemeInUrl(sourceUrl, theme),
+    [sourceUrl, theme],
+  );
 
   return (
     <Layout
