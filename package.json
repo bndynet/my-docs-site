@@ -4,7 +4,8 @@
   "private": true,
   "description": "Documentation site built on @bndynet/docs. Site settings live in docs.config.js; all template assets live in packages/docs/assets/.",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "bndy-demo"
   ],
   "scripts": {
     "start": "docs dev",

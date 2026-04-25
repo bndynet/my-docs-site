@@ -106,6 +106,161 @@ function walkFiles(root) {
 }
 
 /**
+ * Merge `<siteDir>/src/pages/` with the packaged `assets/src/pages/` into a
+ * single materialized directory, with user files taking precedence.
+ *
+ * Why this exists at all: `@docusaurus/plugin-content-pages` accepts a single
+ * `path` and scans it recursively for routes. The previous "user-or-packaged"
+ * toggle meant adding even one file under `<siteDir>/src/pages/` (e.g. a
+ * custom homepage) silently dropped every packaged page (`/iframe`,
+ * `/markdown-page`, …). This mirrors the file-level fallback the alias
+ * resolver already does for `@site/src/...`, but the pages plugin scans the
+ * FS directly so a webpack alias is not enough — we need real entries on disk.
+ *
+ * Hybrid materialization (symlink for JS, copy for Markdown):
+ *
+ *   - JS/TS (`.js .jsx .ts .tsx .mjs .cjs`) → SYMLINK to source.
+ *     Webpack defaults to `resolve.symlinks: true`, so module identity uses
+ *     the real path. Relative imports in packaged files (e.g.
+ *     `../theme/ColorModeToggle` inside `iframe.js`) keep resolving against
+ *     the package's own directory, and Babel rules keyed off `ASSETS.dir`
+ *     still match. User JS that imports `../components/X` resolves against
+ *     the user's real `src/pages` for the same reason.
+ *
+ *   - Markdown (`.md .mdx`) → COPY.
+ *     `plugin-content-pages` writes per-page metadata files keyed by
+ *     `docuHash(aliasedSitePath(source))` and the MDX loader looks them up
+ *     by `docuHash(aliasedSitePath(mdxPath))`. With symlinks those two paths
+ *     diverge (plugin sees the cache path, the loader sees the realpath
+ *     after webpack symlink resolution), the loader can't find the metadata
+ *     JSON, and SSG dies with "Cannot destructure property 'title' of
+ *     'metadata' as it is undefined". Copies make both sides agree.
+ *
+ *   - Everything else (`.css`, images, …) → COPY.
+ *     Same reasoning as Markdown: keep sibling assets at the cache path so
+ *     remark-image / CSS-module references next to a `.md` resolve.
+ *
+ * Cache location: `<siteDir>/.docusaurus/.bndynet-pages/`. We piggyback on
+ * the `.docusaurus/` directory because it is already gitignored by the
+ * standard Docusaurus template and is automatically cleared by
+ * `docusaurus clear`/`docs clear`. Putting the cache inside
+ * `node_modules/.cache/` (the obvious build-cache spot) breaks the build —
+ * Docusaurus's default Babel rule has `exclude:/node_modules/`, so any user
+ * JSX file linked/copied there is left untranspiled and webpack reports the
+ * confusing "Module parse failed: Unexpected token" at the JSX angle bracket.
+ *
+ * Live edits in dev: the user's edits under `<siteDir>/src/pages/` need to
+ * propagate into the cache dir for HMR/reload. Symlinks already resolve to
+ * the real source for JS, so HMR follows naturally. For Markdown copies we
+ * install a `fs.watch` hook (returned object → `startPagesWatcher`) that
+ * mirrors add/change/unlink events into the cache dir while the dev server
+ * stays alive. Production `build` exits before any event fires, which is fine.
+ */
+const SYMLINK_PAGE_EXTS = new Set([
+  '.js',
+  '.jsx',
+  '.ts',
+  '.tsx',
+  '.mjs',
+  '.cjs',
+]);
+
+function ensureMergedPagesDir({ siteDir, userPages, packagedPages }) {
+  const cacheDir = path.join(siteDir, '.docusaurus', '.bndynet-pages');
+  fs.rmSync(cacheDir, { recursive: true, force: true });
+  fs.mkdirSync(cacheDir, { recursive: true });
+
+  // Materialize one source file into cacheDir at the same relative path.
+  // Skip if a destination already exists (we link user files first, so this
+  // preserves user precedence when both sides ship the same path).
+  const linkOne = (src, dst) => {
+    if (fs.existsSync(dst)) return;
+    fs.mkdirSync(path.dirname(dst), { recursive: true });
+    const ext = path.extname(src).toLowerCase();
+    if (SYMLINK_PAGE_EXTS.has(ext)) {
+      try {
+        fs.symlinkSync(src, dst, 'file');
+        return;
+      } catch {
+        // Fall through to copy on platforms without symlink permission
+        // (e.g. Windows w/o Developer Mode). For packaged JS this loses
+        // relative-import resolution; the consumer should enable symlinks
+        // or migrate that JS page into their own `src/pages/` to flatten it.
+      }
+    }
+    fs.copyFileSync(src, dst);
+  };
+  const linkTree = (root) => {
+    if (!fs.existsSync(root)) return;
+    for (const abs of walkFiles(root)) {
+      const rel = path.relative(root, abs);
+      linkOne(abs, path.join(cacheDir, rel));
+    }
+  };
+
+  linkTree(userPages);
+  linkTree(packagedPages);
+  return { cacheDir, userPages, packagedPages };
+}
+
+/**
+ * Mirror live edits under `<siteDir>/src/pages/` into the merged cache dir
+ * created by `ensureMergedPagesDir`. Only relevant in dev — production
+ * `build` exits before any event fires.
+ *
+ * Scope: only files we COPY into the cache (Markdown, CSS, images, …). JS/TS
+ * pages are symlinked, so webpack already sees user edits through the link
+ * via `resolve.symlinks: true` and we must not overwrite those symlinks with
+ * stale copies. Skipping JS/TS extensions here keeps that invariant.
+ *
+ * Behavior for watched (copied) files:
+ *   add/change → copy user file into cache dir (user always wins).
+ *   unlink     → remove from cache dir; if a same-named packaged file exists,
+ *                restore it as the fallback.
+ *
+ * Implemented with `fs.watch({ recursive: true })` (Node ≥18 on macOS/Linux,
+ * Node ≥20 stabilized on Windows). We avoid pulling in a chokidar dep here;
+ * the dev-mode-only watcher is best-effort and silently no-ops if the
+ * platform rejects recursive watching.
+ */
+function startPagesWatcher({ cacheDir, userPages, packagedPages }) {
+  if (!fs.existsSync(userPages)) return;
+  let watcher;
+  try {
+    watcher = fs.watch(userPages, { recursive: true });
+  } catch {
+    return;
+  }
+  watcher.on('error', () => {});
+  watcher.on('change', (_event, filename) => {
+    if (!filename) return;
+    const rel = filename.toString();
+    const ext = path.extname(rel).toLowerCase();
+    if (SYMLINK_PAGE_EXTS.has(ext)) return; // handled by webpack via symlink
+    const userFile = path.join(userPages, rel);
+    const cacheFile = path.join(cacheDir, rel);
+    if (fs.existsSync(userFile) && fs.statSync(userFile).isFile()) {
+      try {
+        fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+        fs.copyFileSync(userFile, cacheFile);
+      } catch {}
+      return;
+    }
+    // User file is gone: restore packaged fallback if any, else drop.
+    const pkgFile = path.join(packagedPages, rel);
+    try {
+      if (fs.existsSync(pkgFile) && fs.statSync(pkgFile).isFile()) {
+        fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+        fs.copyFileSync(pkgFile, cacheFile);
+      } else if (fs.existsSync(cacheFile)) {
+        fs.unlinkSync(cacheFile);
+      }
+    } catch {}
+  });
+  if (typeof watcher.unref === 'function') watcher.unref();
+}
+
+/**
  * For a request of the form `@site/<subpath>`, return the package's fallback
  * absolute path if that subpath is one we back-fill, else null.
  *
@@ -260,12 +415,22 @@ function isLayoutElkResolvable(siteDir) {
   }
 }
 
-function docsAliasPlugin({ siteDir }) {
+function docsAliasPlugin({ siteDir, mergedPages }) {
   const themeAlias = buildThemeAliasMap({ siteDir });
   const layoutElkResolvable = isLayoutElkResolvable(siteDir);
+  // Start the dev-mode pages watcher exactly once. We piggy-back on
+  // `configureWebpack` (which runs on every (re)build, including the dev
+  // server's initial compile) but guard with a flag so we don't pile up
+  // watchers across HMR rebuilds. The watcher is a no-op outside dev because
+  // the build process exits before any FS event arrives.
+  let watcherStarted = false;
   return {
     name: '@bndynet/docs-alias',
     configureWebpack(_config, isServer, utils) {
+      if (mergedPages && !watcherStarted) {
+        startPagesWatcher(mergedPages);
+        watcherStarted = true;
+      }
       const extraRules = [];
       if (ASSETS_IN_NODE_MODULES && utils && typeof utils.getJSLoader === 'function') {
         extraRules.push({
@@ -310,9 +475,19 @@ function buildDocusaurusConfig({ siteDir, app, docsPathRelative, blog, site }) {
   }
   if (fs.existsSync(ASSETS.static)) staticDirectories.push(ASSETS.static);
 
-  // Pages path: prefer user's src/pages, else shipped defaults.
-  const userPages = path.join(siteDir, 'src', 'pages');
-  const pagesPath = fs.existsSync(userPages) ? userPages : ASSETS.srcPages;
+  // Pages path: when the user has any `src/pages/` files, materialize a
+  // merged directory (user precedence + packaged fallback) and hand that to
+  // Docusaurus. Otherwise the packaged dir works directly. See
+  // `ensureMergedPagesDir` for the rationale.
+  const userPagesDir = path.join(siteDir, 'src', 'pages');
+  const mergedPages = fs.existsSync(userPagesDir)
+    ? ensureMergedPagesDir({
+        siteDir,
+        userPages: userPagesDir,
+        packagedPages: ASSETS.srcPages,
+      })
+    : null;
+  const pagesPath = mergedPages ? mergedPages.cacheDir : ASSETS.srcPages;
 
   // clientModules: allow consumer's static/app.js to run on boot; else use shipped one.
   const clientModules = [];
@@ -511,7 +686,7 @@ function buildDocusaurusConfig({ siteDir, app, docsPathRelative, blog, site }) {
         '@easyops-cn/docusaurus-search-local',
         { hashed: true, indexPages: true },
       ],
-      () => docsAliasPlugin({ siteDir }),
+      () => docsAliasPlugin({ siteDir, mergedPages }),
     ],
 
     stylesheets: userStylesheets,
