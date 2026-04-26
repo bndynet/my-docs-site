@@ -261,6 +261,17 @@ function startPagesWatcher({ cacheDir, userPages, packagedPages }) {
 }
 
 /**
+ * Enable file watching only for interactive dev server commands.
+ * `docs` CLI injects DOCS_COMMAND (`start`/`build`/...). To guarantee build
+ * never watches files, default is always `false` unless command is explicitly
+ * `start` or `dev`.
+ */
+function shouldEnablePagesWatcher() {
+  const cmd = String(process.env.DOCS_COMMAND || '').toLowerCase();
+  return cmd === 'start' || cmd === 'dev';
+}
+
+/**
  * For a request of the form `@site/<subpath>`, return the package's fallback
  * absolute path if that subpath is one we back-fill, else null.
  *
@@ -418,16 +429,15 @@ function isLayoutElkResolvable(siteDir) {
 function docsAliasPlugin({ siteDir, mergedPages }) {
   const themeAlias = buildThemeAliasMap({ siteDir });
   const layoutElkResolvable = isLayoutElkResolvable(siteDir);
-  // Start the dev-mode pages watcher exactly once. We piggy-back on
+  // Start the pages watcher exactly once for dev/start commands. We piggy-back on
   // `configureWebpack` (which runs on every (re)build, including the dev
   // server's initial compile) but guard with a flag so we don't pile up
-  // watchers across HMR rebuilds. The watcher is a no-op outside dev because
-  // the build process exits before any FS event arrives.
+  // watchers across HMR rebuilds.
   let watcherStarted = false;
   return {
     name: '@bndynet/docs-alias',
     configureWebpack(_config, isServer, utils) {
-      if (mergedPages && !watcherStarted) {
+      if (mergedPages && !watcherStarted && shouldEnablePagesWatcher()) {
         startPagesWatcher(mergedPages);
         watcherStarted = true;
       }

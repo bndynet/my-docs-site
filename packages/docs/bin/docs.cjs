@@ -495,6 +495,7 @@ function runDocusaurus(command, forwardArgs) {
   const forwarded = [docusaurusCmd, '--config', shimPath, ...cleanArgs];
 
   const env = { ...process.env, DOCS_DIR: siteDir };
+  env.DOCS_COMMAND = docusaurusCmd;
   if (docsConfig) {
     env.DOCS_CONFIG = path.isAbsolute(docsConfig)
       ? docsConfig
