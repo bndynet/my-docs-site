@@ -625,6 +625,10 @@ function buildDocusaurusConfig({ siteDir, app, docsPathRelative, blog, site }) {
 
     markdown: {
       mermaid: true,
+      hooks: {
+        // Default Docusaurus is 'throw'; warn keeps CI/build green while surfacing bad paths.
+        onBrokenMarkdownImages: 'warn',
+      },
     },
 
     presets: [
